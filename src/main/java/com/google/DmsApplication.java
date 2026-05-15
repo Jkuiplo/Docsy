@@ -1,10 +1,10 @@
 package com.google;
 
-import com.google.entity.User;
-import com.google.entity.Workspace;
+import com.google.feature.user.User;
+import com.google.feature.workspace.Workspace;
 import com.google.enums.JoinMode;
-import com.google.repository.UserRepository;
-import com.google.repository.WorkspaceRepository;
+import com.google.feature.user.UserRepository;
+import com.google.feature.workspace.WorkspaceRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

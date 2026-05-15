@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="88c2ae9b-fc69-4ec7-8c0d-a26cec27d4e6" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/DmsApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/DmsApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/entity/AuditLog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/audit/AuditLog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/entity/BaseEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/common/entity/BaseEntity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/entity/Document.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/document/Document.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/entity/DocumentVersion.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/documentVersion/DocumentVersion.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/entity/EmailVerificationToken.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/emailVerification/EmailVerificationToken.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/entity/Notification.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/notification/Notification.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/entity/ReviewComment.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/reviewComment/ReviewComment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/entity/Template.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/template/Template.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/entity/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/user/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/entity/Workspace.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/workspace/Workspace.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/entity/WorkspaceInvitation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/workspaceInvitation/WorkspaceInvitation.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/entity/WorkspaceMember.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/workspaceMember/WorkspaceMember.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/entity/WorkspaceRolePermission.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/permission/WorkspaceRolePermission.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/repository/UserRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/user/UserRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/google/repository/WorkspaceRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/google/feature/workspace/WorkspaceRepository.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="package-info" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GradleScriptDefinitionsStorage" workingDir="$PROJECT_DIR$" gradleHome="$USER_HOME$/.gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14" javaHome="/usr/lib/jvm/openjdk21" gradleVersion="8.14" />
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 3
+}]]></component>
+  <component name="ProjectId" id="3Dm2IJrz3ZfyXO146NG5IgxXIqw" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Gradle.Docsy [:com.google.DmsApplication.main()].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "settings.editor.selected.configurable": "advanced.settings"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="88c2ae9b-fc69-4ec7-8c0d-a26cec27d4e6" name="Changes" comment="" />
+      <created>1778872842305</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1778872842305</updated>
+    </task>
+    <servers />
+  </component>
+</project>
