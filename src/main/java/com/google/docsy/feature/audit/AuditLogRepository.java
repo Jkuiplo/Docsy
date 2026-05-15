@@ -1,0 +1,4 @@
+package com.google.docsy.feature.audit;
+
+public class AuditLogRepository {
+}
