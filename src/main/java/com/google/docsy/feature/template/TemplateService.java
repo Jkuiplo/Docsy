@@ -1,11 +1,14 @@
 package com.google.docsy.feature.template;
 
 import com.google.docsy.common.exception.NotFoundException;
+import com.google.docsy.common.security.CurrentUserProvider;
+import com.google.docsy.feature.audit.AuditLogService;
 import com.google.docsy.feature.permission.PermissionChecker;
 import com.google.docsy.feature.template.dto.request.CreateTemplateRequest;
 import com.google.docsy.feature.template.dto.request.UpdateTemplateRequest;
 import com.google.docsy.feature.template.dto.response.TemplateResponse;
 import com.google.docsy.feature.template.mapper.TemplateMapper;
+import com.google.docsy.feature.user.User;
 import com.google.docsy.feature.workspace.Workspace;
 import com.google.docsy.feature.workspace.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +28,8 @@ public class TemplateService {
     private final WorkspaceRepository workspaceRepository;
     private final PermissionChecker permissionChecker;
     private final TemplateMapper templateMapper;
+    private final CurrentUserProvider currentUserProvider;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public TemplateResponse createTemplate(UUID userId, UUID workspaceId, CreateTemplateRequest request) {
@@ -40,6 +45,10 @@ public class TemplateService {
         template.setHtmlContent(request.getHtmlContent());
 
         Template savedTemplate = templateRepository.save(template);
+
+        User requester = currentUserProvider.getCurrentUser();
+        auditLogService.logAction(workspace, requester, "TEMPLATE_CREATED", "Template created: " + request.getTitle());
+
         return templateMapper.toResponse(savedTemplate);
     }
 
@@ -87,6 +96,10 @@ public class TemplateService {
         
         // Soft Delete implementation
         template.setDeletedAt(LocalDateTime.now());
+
+        User requester = currentUserProvider.getCurrentUser();
+        auditLogService.logAction(template.getWorkspace(), requester, "TEMPLATE_DELETED", "Template_deleted");
+
         templateRepository.save(template);
     }
 

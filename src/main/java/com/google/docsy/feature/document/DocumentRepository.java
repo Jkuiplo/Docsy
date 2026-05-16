@@ -13,4 +13,5 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
     Optional<Document> findByIdAndWorkspaceId(UUID id, UUID workspaceId);
     List<Document> findByWorkspaceIdAndStatusOrderByUpdatedAtDesc(UUID workspaceId, DocumentStatus status);
     List<Document> findByStatusAndArchiveScheduledAtLessThanEqual(DocumentStatus status, java.time.LocalDateTime date);
+    List<Document> findByWorkspaceIdAndAssignedReviewerIdAndStatus(UUID workspaceId, UUID reviewerId, DocumentStatus status);
 }

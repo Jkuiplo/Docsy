@@ -1,6 +1,7 @@
 package com.google.docsy.feature.archive;
 
 import com.google.docsy.enums.DocumentStatus;
+import com.google.docsy.feature.audit.AuditLogService;
 import com.google.docsy.feature.document.Document;
 import com.google.docsy.feature.document.DocumentRepository;
 import com.google.docsy.feature.document.dto.response.DocumentDetailsResponse;
@@ -23,6 +24,7 @@ public class ArchiveService {
     private final DocumentRepository documentRepository;
     private final DocumentMapper documentMapper;
     private final PermissionChecker permissionChecker;
+    private final AuditLogService auditLogService;
 
     public List<DocumentDetailsResponse> getArchivedDocuments(UUID userId, UUID workspaceId) {
         // We added VIEW_ARCHIVE to the Permission enum in Stage 6!
@@ -51,7 +53,9 @@ public class ArchiveService {
             doc.setArchivedAt(LocalDateTime.now());
             // Clear the schedule timer since it's now archived
             doc.setArchiveScheduledAt(null); 
+            auditLogService.logAction(doc.getWorkspace(), null, "DOCUMENT_ARCHIVED", "Auto-archived document ID: " + doc.getId());
         }
+
 
         documentRepository.saveAll(documentsToArchive);
         System.out.println("Successfully archived " + documentsToArchive.size() + " document(s).");

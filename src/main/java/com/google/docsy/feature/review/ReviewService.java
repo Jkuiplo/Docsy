@@ -5,6 +5,7 @@ import com.google.docsy.common.exception.ForbiddenException;
 import com.google.docsy.common.exception.NotFoundException;
 import com.google.docsy.enums.DocumentStatus;
 import com.google.docsy.enums.ReviewCommentType;
+import com.google.docsy.feature.audit.AuditLogService;
 import com.google.docsy.feature.document.Document;
 import com.google.docsy.feature.document.DocumentRepository;
 import com.google.docsy.feature.notification.NotificationService;
@@ -34,6 +35,7 @@ public class ReviewService {
     private final ReviewCommentService commentService;
     private final PermissionChecker permissionChecker;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public void submitForReview(User submitter, UUID workspaceId, UUID documentId, SubmitDocumentRequest request) {
@@ -54,6 +56,9 @@ public class ReviewService {
 
         document.setStatus(DocumentStatus.ON_REVIEW);
         document.setAssignedReviewer(reviewer);
+        
+        auditLogService.logAction(document.getWorkspace(), submitter, "DOCUMENT_SUBMITTED", "Submitted document ID: " + document.getId());
+
         documentRepository.save(document);
 
         commentService.addSystemComment(document, submitter, ReviewCommentType.SUBMIT, request.getComment());
@@ -74,6 +79,8 @@ public class ReviewService {
         // Scheduled for archiving in 7 days, as per your SRS rules
         document.setArchiveScheduledAt(LocalDateTime.now().plusDays(7)); 
         
+        auditLogService.logAction(document.getWorkspace(), reviewer, "DOCUMENT_APPROVED", "Approved document ID: " + document.getId());
+
         documentRepository.save(document);
 
         commentService.addSystemComment(document, reviewer, ReviewCommentType.APPROVE, request.getComment());
@@ -94,6 +101,9 @@ public class ReviewService {
         Document document = getDocumentForReview(documentId, workspaceId, reviewer.getId());
 
         document.setStatus(DocumentStatus.REJECTED);
+
+        auditLogService.logAction(document.getWorkspace(), reviewer, "DOCUMENT_REJECTED", "Rejected document ID: " + document.getId());
+
         documentRepository.save(document);
 
         commentService.addSystemComment(document, reviewer, ReviewCommentType.REJECT, request.getReason());

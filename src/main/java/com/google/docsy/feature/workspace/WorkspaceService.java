@@ -5,6 +5,7 @@ import com.google.docsy.common.exception.NotFoundException;
 import com.google.docsy.common.util.JoinCodeGenerator;
 import com.google.docsy.enums.JoinMode;
 import com.google.docsy.enums.WorkspaceRole;
+import com.google.docsy.feature.audit.AuditLogService;
 import com.google.docsy.feature.user.User;
 import com.google.docsy.feature.workspace.dto.request.CreateWorkspaceRequest;
 import com.google.docsy.feature.workspace.dto.request.JoinWorkspaceRequest;
@@ -29,6 +30,7 @@ public class WorkspaceService {
     private final WorkspaceMemberRepository memberRepository;
     private final WorkspaceMapper workspaceMapper;
     private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public WorkspaceResponse createWorkspace(User owner, CreateWorkspaceRequest request) {
@@ -37,6 +39,8 @@ public class WorkspaceService {
         workspace.setName(request.getName());
         workspace.setOwner(owner);
         workspace.setJoinMode(request.getJoinMode() != null ? request.getJoinMode() : JoinMode.INVITE_ONLY);
+        
+        auditLogService.logAction(workspace, owner, "WORKSPACE_CREATED", "Workspace initialized");
 
         if (workspace.getJoinMode() == JoinMode.PASSWORD_AND_INVITE && request.getJoinPassword() != null) {
             workspace.setJoinPasswordHash(passwordEncoder.encode(request.getJoinPassword()));
@@ -90,6 +94,8 @@ public class WorkspaceService {
         newMember.setRole(WorkspaceRole.USER);
         newMember.setJoinedAt(LocalDateTime.now());
         memberRepository.save(newMember);
+
+        auditLogService.logAction(workspace, user, "MEMBER_JOINED", user.getEmail() + " joined the workspace");
 
         return workspaceMapper.toResponse(workspace);
     }

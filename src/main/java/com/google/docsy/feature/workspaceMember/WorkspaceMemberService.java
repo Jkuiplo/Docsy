@@ -2,8 +2,12 @@ package com.google.docsy.feature.workspaceMember;
 
 import com.google.docsy.common.exception.BadRequestException;
 import com.google.docsy.common.exception.NotFoundException;
+import com.google.docsy.common.security.CurrentUserProvider;
 import com.google.docsy.enums.WorkspaceRole;
+import com.google.docsy.feature.audit.AuditLogService;
+import com.google.docsy.feature.document.DocumentService;
 import com.google.docsy.feature.permission.PermissionChecker;
+import com.google.docsy.feature.user.User;
 import com.google.docsy.feature.workspaceMember.dto.request.ChangeMemberRoleRequest;
 import com.google.docsy.feature.workspaceMember.dto.response.WorkspaceMemberResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +25,9 @@ public class WorkspaceMemberService {
 
     private final WorkspaceMemberRepository memberRepository;
     private final PermissionChecker permissionChecker;
+    private final CurrentUserProvider currentUserProvider;
+    private final AuditLogService auditLogService;
+    private final DocumentService documentService;
 
     public List<WorkspaceMemberResponse> getMembers(UUID userId, UUID workspaceId) {
         permissionChecker.verifyWorkspaceAccess(userId, workspaceId);
@@ -42,6 +49,10 @@ public class WorkspaceMemberService {
         }
 
         targetMember.setRole(request.getRole());
+        
+        User requester = currentUserProvider.getCurrentUser();
+        auditLogService.logAction(targetMember.getWorkspace(), requester, "ROLE_CHANGED", "Role changed to " + request.getRole());
+
         memberRepository.save(targetMember);
     }
 
@@ -60,7 +71,10 @@ public class WorkspaceMemberService {
         targetMember.setRemovedAt(LocalDateTime.now());
         memberRepository.save(targetMember);
 
-        // TODO: In the future, trigger DocumentService to unassign this user from active ON_REVIEW documents
+        User requester = currentUserProvider.getCurrentUser();
+        auditLogService.logAction(targetMember.getWorkspace(), requester, "MEMBER_REMOVED", "Removed User " + targetMember.getUser().getEmail());
+        
+        documentService.unassignRemovedReviewer(workspaceId, targetMember.getUser().getId());
     }
 
     private WorkspaceMemberResponse mapToResponse(WorkspaceMember member) {

@@ -3,6 +3,7 @@ package com.google.docsy.feature.document;
 import com.google.docsy.common.exception.BadRequestException;
 import com.google.docsy.common.exception.NotFoundException;
 import com.google.docsy.enums.DocumentStatus;
+import com.google.docsy.feature.audit.AuditLogService;
 import com.google.docsy.feature.document.dto.request.CreateDocumentRequest;
 import com.google.docsy.feature.document.dto.request.UpdateDocumentRequest;
 import com.google.docsy.feature.document.dto.response.DocumentDetailsResponse;
@@ -33,6 +34,7 @@ public class DocumentService {
     private final DocumentVersionService versionService;
     private final PermissionChecker permissionChecker;
     private final DocumentMapper documentMapper;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public DocumentDetailsResponse createDocument(User author, UUID workspaceId, CreateDocumentRequest request) {
@@ -62,6 +64,8 @@ public class DocumentService {
         
         // Auto-create initial version snapshot
         versionService.createSnapshot(savedDoc, author);
+
+        auditLogService.logAction(workspace, author, "DOCUMENT_CREATED", "Created document: " + request.getTitle());
 
         return documentMapper.toDetailsResponse(savedDoc);
     }
@@ -119,5 +123,21 @@ public class DocumentService {
                 .orElseThrow(() -> new NotFoundException("Document not found"));
 
         return versionService.getDocumentVersions(documentId);
+    }
+
+    @Transactional
+    public void unassignRemovedReviewer(UUID workspaceId, UUID reviewerId) {
+        List<Document> stuckDocuments = documentRepository.findByWorkspaceIdAndAssignedReviewerIdAndStatus(
+                workspaceId, reviewerId, DocumentStatus.ON_REVIEW);
+
+        if (stuckDocuments.isEmpty()) return;
+
+        for (Document doc : stuckDocuments) {
+            doc.setAssignedReviewer(null);
+            doc.setStatus(DocumentStatus.DRAFT);
+        }
+        
+        documentRepository.saveAll(stuckDocuments);
+        System.out.println("Reverted " + stuckDocuments.size() + " document(s) to DRAFT because reviewer was removed.");
     }
 }
