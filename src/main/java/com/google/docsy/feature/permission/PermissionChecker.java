@@ -61,4 +61,10 @@ public class PermissionChecker {
     public void checkCanCreateBlankDocument(UUID userId, UUID workspaceId) {
         checkPermission(userId, workspaceId, Permission.CREATE_BLANK_DOCUMENTS);
     }
+    public void checkCanCreateFromTemplate(UUID userId, UUID workspaceId) {
+        checkPermission(userId, workspaceId, Permission.CREATE_FROM_TEMPLATE);
+    }
+    public void checkCanEditAnyDocument(UUID userId, UUID workspaceId) {
+        checkPermission(userId, workspaceId, Permission.EDIT_ALL_DOCUMENTS);
+    }
 }
