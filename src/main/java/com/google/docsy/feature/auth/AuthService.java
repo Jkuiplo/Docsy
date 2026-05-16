@@ -7,6 +7,7 @@ import com.google.docsy.feature.auth.dto.request.LoginRequest;
 import com.google.docsy.feature.auth.dto.request.RegisterRequest;
 import com.google.docsy.feature.auth.dto.response.AuthResponse;
 import com.google.docsy.feature.emailVerification.EmailVerificationService;
+import com.google.docsy.feature.notification.NotificationService;
 import com.google.docsy.common.exception.NotFoundException;
 import com.google.docsy.common.exception.BadRequestException;
 import com.google.docsy.feature.user.User;
@@ -27,7 +28,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final EmailVerificationService emailVerificationService;
-
+    private final NotificationService notificationService;
 
     public AuthResponse register(RegisterRequest request) {
 
@@ -56,7 +57,8 @@ public class AuthService {
         System.out.println("USER SAVED: " + user.getId());
 
         System.out.println("Generating token for verification");
-        emailVerificationService.createVerificationToken(user);
+        String token = emailVerificationService.createVerificationToken(user);
+        notificationService.sendVerificationEmail(user.getEmail(), token);
         System.out.println("Token has been created");
 
         System.out.println("GENERATING JWT...");

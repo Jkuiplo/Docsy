@@ -1,53 +1,41 @@
 package com.google.docsy.feature.notification;
 
-import com.google.docsy.feature.user.User;
-import com.google.docsy.feature.workspace.Workspace;
-import lombok.Data;
+import com.google.docsy.common.entity.BaseEntity;
 import com.google.docsy.enums.NotificationStatus;
+import com.google.docsy.enums.NotificationType;
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "notifications", indexes = {
-    @Index(name = "idx_notifications_email", columnList = "email"),
-    @Index(name = "idx_notifications_status", columnList = "status")
-})
-public class Notification {
+@Table(name = "notifications")
+public class Notification extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "workspace_id")
-    private Workspace workspace;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
-
-    @Column(nullable = false, length = 255)
-    private String email;
-
-    @Column(nullable = false, length = 80)
-    private String type;
+    @Column(name = "recipient_email", nullable = false)
+    private String recipientEmail;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private NotificationStatus status;
+    private NotificationType type;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String subject;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String body;
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String message;
 
-    @Column(name = "error_message", columnDefinition = "TEXT")
-    private String errorMessage;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private NotificationStatus status = NotificationStatus.PENDING;
 
     @Column(name = "sent_at")
     private LocalDateTime sentAt;

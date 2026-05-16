@@ -3,6 +3,7 @@ package com.google.docsy.feature.workspaceInvitation;
 import com.google.docsy.common.exception.BadRequestException;
 import com.google.docsy.common.exception.NotFoundException;
 import com.google.docsy.enums.InvitationStatus;
+import com.google.docsy.feature.notification.NotificationService;
 import com.google.docsy.feature.permission.PermissionChecker;
 import com.google.docsy.feature.user.User;
 import com.google.docsy.feature.workspace.Workspace;
@@ -28,6 +29,7 @@ public class WorkspaceInvitationService {
     private final WorkspaceMemberRepository memberRepository;
     private final WorkspaceRepository workspaceRepository;
     private final PermissionChecker permissionChecker;
+    private final NotificationService notificationService;
 
     @Transactional
     public WorkspaceInvitationResponse inviteMember(User requester, UUID workspaceId, InviteMemberRequest request) {

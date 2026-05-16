@@ -7,6 +7,7 @@ import com.google.docsy.enums.DocumentStatus;
 import com.google.docsy.enums.ReviewCommentType;
 import com.google.docsy.feature.document.Document;
 import com.google.docsy.feature.document.DocumentRepository;
+import com.google.docsy.feature.notification.NotificationService;
 import com.google.docsy.feature.permission.PermissionChecker;
 import com.google.docsy.feature.review.dto.request.ApproveDocumentRequest;
 import com.google.docsy.feature.review.dto.request.RejectDocumentRequest;
@@ -32,6 +33,7 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final ReviewCommentService commentService;
     private final PermissionChecker permissionChecker;
+    private final NotificationService notificationService;
 
     @Transactional
     public void submitForReview(User submitter, UUID workspaceId, UUID documentId, SubmitDocumentRequest request) {
@@ -56,7 +58,9 @@ public class ReviewService {
 
         commentService.addSystemComment(document, submitter, ReviewCommentType.SUBMIT, request.getComment());
         
-        // TODO: Call NotificationService to alert the reviewer
+        notificationService.sendDocumentStatusEmail(
+            reviewer.getEmail(), document.getTitle(), "ON_REVIEW", request.getComment()
+        );
     }
 
     @Transactional
@@ -74,7 +78,9 @@ public class ReviewService {
 
         commentService.addSystemComment(document, reviewer, ReviewCommentType.APPROVE, request.getComment());
         
-        // TODO: Call NotificationService to alert the author
+        notificationService.sendDocumentStatusEmail(
+            document.getAuthor().getEmail(), document.getTitle(), "APPROVED", request.getComment()
+        );
     }
 
     @Transactional
@@ -92,7 +98,9 @@ public class ReviewService {
 
         commentService.addSystemComment(document, reviewer, ReviewCommentType.REJECT, request.getReason());
         
-        // TODO: Call NotificationService to alert the author
+        notificationService.sendDocumentStatusEmail(
+            document.getAuthor().getEmail(), document.getTitle(), "REJECTED", request.getReason()
+        );
     }
 
     public List<ReviewQueueItemResponse> getReviewQueue(UUID reviewerId, UUID workspaceId) {
