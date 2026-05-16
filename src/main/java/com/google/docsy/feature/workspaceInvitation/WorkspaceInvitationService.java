@@ -54,7 +54,11 @@ public class WorkspaceInvitationService {
         System.out.println("Token: " + invitation.getToken());
         System.out.println("-------------------------------------------");
 
-        // TODO: Call NotificationService here to send the actual email
+        notificationService.sendInvitationEmail(
+            request.getEmail(), 
+            workspace.getName(), 
+            invitation.getToken()
+        );
 
         return mapToResponse(invitation);
     }

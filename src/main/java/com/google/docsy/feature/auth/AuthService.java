@@ -59,7 +59,7 @@ public class AuthService {
         System.out.println("Generating token for verification");
         String token = emailVerificationService.createVerificationToken(user);
         notificationService.sendVerificationEmail(user.getEmail(), token);
-        System.out.println("Token has been created");
+        System.out.println("Token send");
 
         System.out.println("GENERATING JWT...");
         UserPrincipal principal = new UserPrincipal(user);

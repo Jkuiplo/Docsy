@@ -1,4 +1,5 @@
 package com.google.docsy.feature.notification.email;
 
-public class EmailSender {
+public interface EmailSender {
+    void sendEmail(String to, String subject, String text);
 }
