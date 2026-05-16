@@ -1,4 +1,15 @@
 package com.google.docsy.feature.permission;
 
-public class Permission {
+public enum Permission {
+    MANAGE_MEMBERS,
+    CREATE_TEMPLATES,
+    EDIT_TEMPLATES,
+    DELETE_TEMPLATES,
+    CREATE_BLANK_DOCUMENTS,
+    CREATE_FROM_TEMPLATE,
+    VIEW_ALL_DOCUMENTS,
+    VIEW_ARCHIVE,
+    REVIEW_ASSIGNED_DOCUMENTS,
+    APPROVE_OWN_DOCUMENTS,
+    EDIT_ARCHIVED_DOCUMENTS
 }
