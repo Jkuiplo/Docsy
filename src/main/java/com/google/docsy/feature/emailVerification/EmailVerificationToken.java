@@ -1,8 +1,9 @@
 package com.google.docsy.feature.emailVerification;
 
 import com.google.docsy.feature.user.User;
-import lombok.Data;
 import jakarta.persistence.*;
+import lombok.Data;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -10,6 +11,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "email_verification_tokens")
 public class EmailVerificationToken {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -18,7 +20,7 @@ public class EmailVerificationToken {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(nullable = false, unique = true)
     private String token;
 
     @Column(name = "expires_at", nullable = false)

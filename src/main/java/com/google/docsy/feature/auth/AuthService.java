@@ -6,6 +6,9 @@ import com.google.docsy.common.security.UserPrincipal;
 import com.google.docsy.feature.auth.dto.request.LoginRequest;
 import com.google.docsy.feature.auth.dto.request.RegisterRequest;
 import com.google.docsy.feature.auth.dto.response.AuthResponse;
+import com.google.docsy.feature.emailVerification.EmailVerificationService;
+import com.google.docsy.common.exception.NotFoundException;
+import com.google.docsy.common.exception.BadRequestException;
 import com.google.docsy.feature.user.User;
 import com.google.docsy.feature.user.UserRepository;
 import com.google.docsy.feature.user.dto.UserResponse;
@@ -23,8 +26,11 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final EmailVerificationService emailVerificationService;
+
 
     public AuthResponse register(RegisterRequest request) {
+
         System.out.println("REGISTER REQUEST:");
         System.out.println("email = " + request.getEmail());
         System.out.println("password = " + request.getPassword());
@@ -37,6 +43,8 @@ public class AuthService {
         }
 
         User user = new User();
+        
+
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setFullName(request.getFullName());
@@ -46,6 +54,10 @@ public class AuthService {
         System.out.println("SAVING USER...");
         userRepository.save(user);
         System.out.println("USER SAVED: " + user.getId());
+
+        System.out.println("Generating token for verification");
+        emailVerificationService.createVerificationToken(user);
+        System.out.println("Token has been created");
 
         System.out.println("GENERATING JWT...");
         UserPrincipal principal = new UserPrincipal(user);
@@ -83,5 +95,22 @@ public class AuthService {
                 .positionTitle(user.getPositionTitle())
                 .emailVerified(user.isEmailVerified())
                 .build();
+    }
+
+    public void verifyEmail(String token) {
+        emailVerificationService.verifyEmail(token);
+    }
+
+    public void resendVerification(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        if (user.isEmailVerified()) {
+            throw new BadRequestException("Email is already verified");
+        }
+
+        System.out.println("Regenerating token for: " + email);
+        emailVerificationService.createVerificationToken(user);
+        System.out.println("New token has been created");
     }
 }

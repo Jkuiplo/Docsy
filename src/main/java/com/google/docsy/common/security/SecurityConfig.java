@@ -42,12 +42,17 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    @Bean
+@Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/verify-email").permitAll()
+                .requestMatchers(
+                        "/api/auth/register", 
+                        "/api/auth/login", 
+                        "/api/auth/verify-email", 
+                        "/api/auth/resend-verification"
+                ).permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
