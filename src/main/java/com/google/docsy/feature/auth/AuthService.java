@@ -73,16 +73,39 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        System.out.println("LOGIN REQUEST:");
+        System.out.println("email = " + request.getEmail());
+        System.out.println("password = " + request.getPassword());
+        
+        System.out.println("Authenticating user: " + request.getEmail());
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
+        System.out.println("Authentication successful for: " + request.getEmail());
         
+        System.out.println("Fetching user from database: " + request.getEmail());
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow();
-                
+                .orElseThrow(() -> {
+                    System.out.println("USER NOT FOUND: " + request.getEmail());
+                    return new NotFoundException("User not found");
+                });
+        System.out.println("User found: ID = " + user.getId() + ", Email = " + user.getEmail());
+        
+        System.out.println("Checking if email is verified for user: " + user.getEmail());
+        if (!user.isEmailVerified()) {
+            System.out.println("EMAIL NOT VERIFIED for user: " + user.getEmail());
+            throw new BadRequestException("Please verify your email before logging in");
+        }
+        System.out.println("Email verified status: " + user.isEmailVerified());
+        
+        System.out.println("Creating UserPrincipal for: " + user.getEmail());
         UserPrincipal principal = new UserPrincipal(user);
+        
+        System.out.println("Generating JWT token for: " + user.getEmail());
         String jwtToken = jwtService.generateToken(principal);
+        System.out.println("JWT token generated successfully for: " + user.getEmail());
 
+        System.out.println("LOGIN COMPLETED SUCCESSFULLY for user: " + user.getEmail());
         return AuthResponse.builder()
                 .token(jwtToken)
                 .user(mapToUserResponse(user))
@@ -111,8 +134,10 @@ public class AuthService {
             throw new BadRequestException("Email is already verified");
         }
 
+
         System.out.println("Regenerating token for: " + email);
-        emailVerificationService.createVerificationToken(user);
+        String token = emailVerificationService.createVerificationToken(user);
+        notificationService.sendVerificationEmail(user.getEmail(), token);
         System.out.println("New token has been created");
     }
 }
