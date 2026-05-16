@@ -1,21 +1,21 @@
 package com.google.docsy.feature.reviewComment;
 
+import com.google.docsy.common.entity.BaseEntity;
+import com.google.docsy.enums.ReviewCommentType;
 import com.google.docsy.feature.document.Document;
 import com.google.docsy.feature.user.User;
-import com.google.docsy.feature.workspace.Workspace;
-import lombok.Data;
-import com.google.docsy.enums.ReviewCommentType;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "review_comments", indexes = {
-    @Index(name = "idx_review_comments_document_id", columnList = "document_id"),
-    @Index(name = "idx_review_comments_workspace_id", columnList = "workspace_id")
-})
-public class ReviewComment {
+@Table(name = "review_comments")
+public class ReviewComment extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -25,25 +25,13 @@ public class ReviewComment {
     private Document document;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "workspace_id", nullable = false)
-    private Workspace workspace;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reviewer_id", nullable = false)
-    private User reviewer;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String comment;
+    @JoinColumn(name = "author_id", nullable = false)
+    private User author;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private ReviewCommentType type;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String commentText;
 }

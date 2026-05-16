@@ -1,24 +1,25 @@
 package com.google.docsy.feature.workspaceMember;
 
+import com.google.docsy.common.entity.BaseEntity;
 import com.google.docsy.enums.WorkspaceRole;
 import com.google.docsy.feature.user.User;
 import com.google.docsy.feature.workspace.Workspace;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "workspace_members", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"workspace_id", "user_id"})
-}, indexes = {
-    @Index(name = "idx_workspace_members_workspace_id", columnList = "workspace_id"),
-    @Index(name = "idx_workspace_members_user_id", columnList = "user_id"),
-    @Index(name = "idx_workspace_members_role", columnList = "role")
-})
-public class WorkspaceMember {
+@Table(
+    name = "workspace_members", 
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"workspace_id", "user_id"})}
+)
+public class WorkspaceMember extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -35,15 +36,16 @@ public class WorkspaceMember {
     @Column(nullable = false, length = 30)
     private WorkspaceRole role;
 
-    @Column(name = "display_name", length = 150)
-    private String displayName;
-
-    @Column(name = "position_title", length = 150)
-    private String positionTitle;
-
     @Column(name = "joined_at", nullable = false)
-    private LocalDateTime joinedAt = LocalDateTime.now();
+    private LocalDateTime joinedAt;
 
     @Column(name = "removed_at")
-    private LocalDateTime removedAt;
+    private LocalDateTime removedAt; 
+
+    @PrePersist
+    public void onPrePersist() {
+        if (joinedAt == null) {
+            joinedAt = LocalDateTime.now();
+        }
+    }
 }
