@@ -2,6 +2,7 @@ package com.google.docsy.feature.workspace;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +25,9 @@ import com.google.docsy.feature.workspaceMember.WorkspaceMember;
 import com.google.docsy.feature.workspaceMember.WorkspaceMemberRepository;
 import com.google.docsy.feature.permission.Permission;
 import com.google.docsy.feature.permission.WorkspaceRolePermission;
+import com.google.docsy.feature.permission.PermissionChecker;
+import com.google.docsy.common.security.CurrentUserProvider;
+import com.google.docsy.feature.workspace.dto.request.UpdateWorkspaceRequest;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,10 +41,11 @@ public class WorkspaceService {
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
     private final WorkspaceRolePermissionRepository rolePermissionRepository;
+    private final PermissionChecker permissionChecker;
+    private final CurrentUserProvider currentUserProvider;
     
     @Transactional
     public WorkspaceResponse createWorkspace(User owner, CreateWorkspaceRequest request) {
-        // 1. Create Workspace
         Workspace workspace = new Workspace();
         workspace.setName(request.getName());
         workspace.setOwner(owner);
@@ -52,7 +57,6 @@ public class WorkspaceService {
             workspace.setJoinPasswordHash(passwordEncoder.encode(request.getJoinPassword()));
         }
 
-        // Generate unique join code
         String newJoinCode;
         do {
             newJoinCode = JoinCodeGenerator.generate();
@@ -61,7 +65,6 @@ public class WorkspaceService {
 
         workspace = workspaceRepository.save(workspace);
 
-        // 2. Automatically make the creator the OWNER member
         WorkspaceMember ownerMember = new WorkspaceMember();
         ownerMember.setWorkspace(workspace);
         ownerMember.setUser(owner);
@@ -70,6 +73,54 @@ public class WorkspaceService {
         memberRepository.save(ownerMember);
 
         initializeDefaultPermissions(workspace);
+
+        return workspaceMapper.toResponse(workspace);
+    }
+
+    public WorkspaceResponse getWorkspaceById(UUID workspaceId) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        
+        // Gatekeeper: Must be a member to even view the workspace details
+        permissionChecker.verifyWorkspaceAccess(currentUser.getId(), workspaceId);
+
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new NotFoundException("Workspace not found"));
+
+        return workspaceMapper.toResponse(workspace);
+    }
+
+    @Transactional
+    public WorkspaceResponse updateWorkspace(UUID workspaceId, UpdateWorkspaceRequest request) {
+        User currentUser = currentUserProvider.getCurrentUser();
+
+        permissionChecker.checkCanManageWorkspace(currentUser.getId(), workspaceId);
+
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new NotFoundException("Workspace not found"));
+
+        StringBuilder auditDetails = new StringBuilder("Updated settings: ");
+
+        if (request.getName() != null && !request.getName().isBlank()) {
+            workspace.setName(request.getName());
+            auditDetails.append("Name. ");
+        }
+
+        if (request.getJoinMode() != null) {
+            workspace.setJoinMode(request.getJoinMode());
+            auditDetails.append("JoinMode set to ").append(request.getJoinMode()).append(". ");
+        }
+
+        // Only update the password if they provided one AND the mode requires it
+        if (request.getJoinPassword() != null && !request.getJoinPassword().isBlank() 
+            && workspace.getJoinMode() == JoinMode.PASSWORD_AND_INVITE) {
+            
+            workspace.setJoinPasswordHash(passwordEncoder.encode(request.getJoinPassword()));
+            auditDetails.append("Join Password changed. ");
+        }
+
+        workspace = workspaceRepository.save(workspace);
+
+        auditLogService.logAction(workspace, currentUser, "WORKSPACE_UPDATED", auditDetails.toString());
 
         return workspaceMapper.toResponse(workspace);
     }
@@ -87,9 +138,8 @@ public class WorkspaceService {
             if (existing.getRemovedAt() == null) {
                 throw new BadRequestException("You are already an active member of this workspace");
             } else {
-                // Reactivate the user!
                 existing.setRemovedAt(null);
-                existing.setRole(WorkspaceRole.USER); // Reset to base role
+                existing.setRole(WorkspaceRole.USER); 
                 existing.setJoinedAt(LocalDateTime.now());
                 memberRepository.save(existing);
                 
@@ -98,7 +148,6 @@ public class WorkspaceService {
             }
         }
         
-        // Validate mode and password
         if (workspace.getJoinMode() == JoinMode.INVITE_ONLY) {
             throw new BadRequestException("This workspace is invite-only. You must receive an email invitation.");
         }
@@ -109,7 +158,6 @@ public class WorkspaceService {
             }
         }
 
-        // Join as a basic USER
         WorkspaceMember newMember = new WorkspaceMember();
         newMember.setWorkspace(workspace);
         newMember.setUser(user);
@@ -123,8 +171,7 @@ public class WorkspaceService {
     }
 
     public List<WorkspaceResponse> getMyWorkspaces(User user) {
-        // Find all memberships for this user, then map the linked workspaces
-        return memberRepository.findAll().stream() // Ideally you'd use a custom query: findByUserIdAndRemovedAtIsNull
+        return memberRepository.findAll().stream() 
                 .filter(m -> m.getUser().getId().equals(user.getId()) && m.getRemovedAt() == null)
                 .map(m -> workspaceMapper.toResponse(m.getWorkspace()))
                 .collect(Collectors.toList());
@@ -132,7 +179,7 @@ public class WorkspaceService {
     
     private void initializeDefaultPermissions(Workspace workspace) {
         for (WorkspaceRole role : WorkspaceRole.values()) {
-            if (role == WorkspaceRole.OWNER) continue; // Owner bypasses DB checks
+            if (role == WorkspaceRole.OWNER) continue; 
 
             for (Permission perm : Permission.values()) {
                 WorkspaceRolePermission rolePerm = new WorkspaceRolePermission();
@@ -140,15 +187,12 @@ public class WorkspaceService {
                 rolePerm.setRole(role);
                 rolePerm.setPermission(perm);
 
-                // Set sensible defaults based on role
                 if (role == WorkspaceRole.ADMIN) {
-                    rolePerm.setEnabled(true); // Admins can do everything
+                    rolePerm.setEnabled(true); 
                 } else if (role == WorkspaceRole.REVIEWER) {
-                    // Reviewers only get review-related permissions by default
                     boolean isReviewAction = (perm == Permission.VIEW_ALL_DOCUMENTS || perm == Permission.REVIEW_ASSIGNED_DOCUMENTS);
                     rolePerm.setEnabled(isReviewAction);
                 } else if (role == WorkspaceRole.USER) {
-                    // Users can only create drafts by default
                     boolean isUserAction = (perm == Permission.CREATE_BLANK_DOCUMENTS || perm == Permission.CREATE_FROM_TEMPLATE);
                     rolePerm.setEnabled(isUserAction);
                 }

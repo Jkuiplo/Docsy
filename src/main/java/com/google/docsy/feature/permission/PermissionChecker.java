@@ -67,4 +67,7 @@ public class PermissionChecker {
     public void checkCanEditAnyDocument(UUID userId, UUID workspaceId) {
         checkPermission(userId, workspaceId, Permission.EDIT_ALL_DOCUMENTS);
     }
+    public void checkCanManageWorkspace(UUID userId, UUID workspaceId) {
+        checkPermission(userId, workspaceId, Permission.MANAGE_WORKSPACE);
+    }
 }
