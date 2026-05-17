@@ -2,6 +2,7 @@ package com.google.docsy.feature.permission;
 
 import com.google.docsy.common.security.CurrentUserProvider;
 import com.google.docsy.feature.permission.dto.request.UpdateRolePermissionRequest;
+import com.google.docsy.feature.permission.dto.response.MyPermissionsResponse;
 import com.google.docsy.feature.permission.dto.response.RolePermissionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,5 +30,10 @@ public class WorkspaceRolePermissionController {
             @RequestBody UpdateRolePermissionRequest request) {
         permissionService.updatePermission(currentUserProvider.getCurrentUser(), workspaceId, request);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<MyPermissionsResponse> getMyPermissions(@PathVariable UUID workspaceId) {
+        return ResponseEntity.ok(permissionService.getMyPermissions(currentUserProvider.getCurrentUserId(), workspaceId));
     }
 }

@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface WorkspaceRolePermissionRepository extends JpaRepository<WorkspaceRolePermission, UUID> {
     Optional<WorkspaceRolePermission> findByWorkspaceIdAndRoleAndPermission(UUID workspaceId, WorkspaceRole role, Permission permission);
     List<WorkspaceRolePermission> findByWorkspaceId(UUID workspaceId);
+    List<WorkspaceRolePermission> findByWorkspaceIdAndRole(UUID workspaceId, WorkspaceRole role);
 }

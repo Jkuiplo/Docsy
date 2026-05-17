@@ -4,8 +4,12 @@ import com.google.docsy.common.exception.NotFoundException;
 import com.google.docsy.enums.WorkspaceRole;
 import com.google.docsy.feature.audit.AuditLogService;
 import com.google.docsy.feature.permission.dto.request.UpdateRolePermissionRequest;
+import com.google.docsy.feature.permission.dto.response.MyPermissionsResponse;
 import com.google.docsy.feature.permission.dto.response.RolePermissionResponse;
 import com.google.docsy.feature.user.User;
+import com.google.docsy.feature.workspaceMember.WorkspaceMember;
+
+import io.jsonwebtoken.lang.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,11 +27,8 @@ public class WorkspaceRolePermissionService {
     private final AuditLogService auditLogService;
 
     public List<RolePermissionResponse> getWorkspacePermissions(UUID requesterId, UUID workspaceId) {
-        // Only Admins/Owners should view security settings
         permissionChecker.checkCanManageMembers(requesterId, workspaceId);
 
-        // Assuming you add this to WorkspaceRolePermissionRepository: 
-        // List<WorkspaceRolePermission> findByWorkspaceId(UUID workspaceId);
         return permissionRepository.findByWorkspaceId(workspaceId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -35,7 +36,6 @@ public class WorkspaceRolePermissionService {
 
     @Transactional
     public void updatePermission(User requester, UUID workspaceId, UpdateRolePermissionRequest request) {
-        // Only Admins/Owners should change security settings
         permissionChecker.checkCanManageMembers(requester.getId(), workspaceId);
 
         if (request.getRole() == WorkspaceRole.OWNER) {
@@ -60,6 +60,28 @@ public class WorkspaceRolePermissionService {
                 .role(perm.getRole())
                 .permission(perm.getPermission())
                 .enabled(perm.isEnabled())
+                .build();
+    }
+
+    public MyPermissionsResponse getMyPermissions(UUID userId, UUID workspaceId) {
+        WorkspaceMember member = permissionChecker.verifyWorkspaceAccess(userId, workspaceId);
+        WorkspaceRole myRole = member.getRole();
+
+        List<Permission> activePermissions;
+
+        if (myRole == WorkspaceRole.OWNER) {
+            activePermissions = Arrays.asList(Permission.values());
+        } else {
+            activePermissions = permissionRepository.findByWorkspaceIdAndRole(workspaceId, myRole)
+                    .stream()
+                    .filter(WorkspaceRolePermission::isEnabled)
+                    .map(WorkspaceRolePermission::getPermission)
+                    .collect(Collectors.toList());
+        }
+
+        return MyPermissionsResponse.builder()
+                .role(myRole)
+                .permissions(activePermissions)
                 .build();
     }
 }
