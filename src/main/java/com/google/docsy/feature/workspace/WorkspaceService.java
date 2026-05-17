@@ -12,15 +12,20 @@ import org.springframework.transaction.annotation.Transactional;
 import com.google.docsy.common.exception.BadRequestException;
 import com.google.docsy.common.exception.NotFoundException;
 import com.google.docsy.common.util.JoinCodeGenerator;
+import com.google.docsy.enums.DocumentStatus;
+import com.google.docsy.enums.InvitationStatus;
 import com.google.docsy.enums.JoinMode;
 import com.google.docsy.enums.WorkspaceRole;
 import com.google.docsy.feature.audit.AuditLogService;
+import com.google.docsy.feature.document.DocumentRepository;
 import com.google.docsy.feature.permission.WorkspaceRolePermissionRepository;
 import com.google.docsy.feature.user.User;
 import com.google.docsy.feature.workspace.dto.request.CreateWorkspaceRequest;
 import com.google.docsy.feature.workspace.dto.request.JoinWorkspaceRequest;
+import com.google.docsy.feature.workspace.dto.response.WorkspaceDashboardResponse;
 import com.google.docsy.feature.workspace.dto.response.WorkspaceResponse;
 import com.google.docsy.feature.workspace.mapper.WorkspaceMapper;
+import com.google.docsy.feature.workspaceInvitation.WorkspaceInvitationRepository;
 import com.google.docsy.feature.workspaceMember.WorkspaceMember;
 import com.google.docsy.feature.workspaceMember.WorkspaceMemberRepository;
 import com.google.docsy.feature.permission.Permission;
@@ -43,6 +48,8 @@ public class WorkspaceService {
     private final WorkspaceRolePermissionRepository rolePermissionRepository;
     private final PermissionChecker permissionChecker;
     private final CurrentUserProvider currentUserProvider;
+    private final DocumentRepository documentRepository;
+    private final WorkspaceInvitationRepository invitationRepository;
     
     @Transactional
     public WorkspaceResponse createWorkspace(User owner, CreateWorkspaceRequest request) {
@@ -80,7 +87,6 @@ public class WorkspaceService {
     public WorkspaceResponse getWorkspaceById(UUID workspaceId) {
         User currentUser = currentUserProvider.getCurrentUser();
         
-        // Gatekeeper: Must be a member to even view the workspace details
         permissionChecker.verifyWorkspaceAccess(currentUser.getId(), workspaceId);
 
         Workspace workspace = workspaceRepository.findById(workspaceId)
@@ -110,7 +116,6 @@ public class WorkspaceService {
             auditDetails.append("JoinMode set to ").append(request.getJoinMode()).append(". ");
         }
 
-        // Only update the password if they provided one AND the mode requires it
         if (request.getJoinPassword() != null && !request.getJoinPassword().isBlank() 
             && workspace.getJoinMode() == JoinMode.PASSWORD_AND_INVITE) {
             
@@ -200,5 +205,37 @@ public class WorkspaceService {
                 rolePermissionRepository.save(rolePerm);
             }
         }
+    }
+    public WorkspaceDashboardResponse getWorkspaceDashboard(UUID workspaceId) {
+        User currentUser = currentUserProvider.getCurrentUser();
+
+        WorkspaceMember member = permissionChecker.verifyWorkspaceAccess(currentUser.getId(), workspaceId);
+        Workspace workspace = member.getWorkspace();
+
+        long drafts = documentRepository.countByWorkspaceIdAndStatus(workspaceId, DocumentStatus.DRAFT);
+        long rejected = documentRepository.countByWorkspaceIdAndStatus(workspaceId, DocumentStatus.REJECTED);
+        long onReview = documentRepository.countByWorkspaceIdAndStatus(workspaceId, DocumentStatus.ON_REVIEW);
+        long approved = documentRepository.countByWorkspaceIdAndStatus(workspaceId, DocumentStatus.APPROVED);
+        long archived = documentRepository.countByWorkspaceIdAndStatus(workspaceId, DocumentStatus.ARCHIVED);
+
+        long pendingInvites = invitationRepository.countByWorkspaceIdAndStatus(workspaceId, InvitationStatus.PENDING);
+
+        long waitingForMe = documentRepository.countByWorkspaceIdAndAssignedReviewerIdAndStatus(
+                workspaceId, currentUser.getId(), DocumentStatus.ON_REVIEW);
+
+        return WorkspaceDashboardResponse.builder()
+                .workspaceId(workspace.getId())
+                .workspaceName(workspace.getName())
+                .myRole(member.getRole())
+                .documentStats(WorkspaceDashboardResponse.DocumentStats.builder()
+                        .draft(drafts)
+                        .rejected(rejected)
+                        .onReview(onReview)
+                        .approved(approved)
+                        .archived(archived)
+                        .build())
+                .pendingInvitations(pendingInvites)
+                .waitingForMyReview(waitingForMe)
+                .build();
     }
 }

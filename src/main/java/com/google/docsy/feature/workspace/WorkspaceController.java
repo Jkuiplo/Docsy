@@ -4,6 +4,7 @@ import com.google.docsy.common.security.UserPrincipal;
 import com.google.docsy.feature.workspace.dto.request.CreateWorkspaceRequest;
 import com.google.docsy.feature.workspace.dto.request.JoinWorkspaceRequest;
 import com.google.docsy.feature.workspace.dto.request.UpdateWorkspaceRequest;
+import com.google.docsy.feature.workspace.dto.response.WorkspaceDashboardResponse;
 import com.google.docsy.feature.workspace.dto.response.WorkspaceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -49,5 +50,10 @@ public class WorkspaceController {
             @PathVariable UUID workspaceId,
             @RequestBody UpdateWorkspaceRequest request) {
         return ResponseEntity.ok(workspaceService.updateWorkspace(workspaceId, request));
+    }
+    
+    @GetMapping("/{workspaceId}/dashboard")
+    public ResponseEntity<WorkspaceDashboardResponse> getWorkspaceDashboard(@PathVariable UUID workspaceId) {
+        return ResponseEntity.ok(workspaceService.getWorkspaceDashboard(workspaceId));
     }
 }
