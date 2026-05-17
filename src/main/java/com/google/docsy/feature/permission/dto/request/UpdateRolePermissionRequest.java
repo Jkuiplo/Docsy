@@ -1,15 +1,11 @@
-package com.google.docsy.feature.permission.dto.response;
+package com.google.docsy.feature.permission.dto.request;
 
 import com.google.docsy.enums.WorkspaceRole;
 import com.google.docsy.feature.permission.Permission;
-import lombok.Builder;
 import lombok.Data;
-import java.util.UUID;
 
 @Data
-@Builder
-public class RolePermissionResponse {
-    private UUID id;
+public class UpdateRolePermissionRequest {
     private WorkspaceRole role;
     private Permission permission;
     private boolean enabled;

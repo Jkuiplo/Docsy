@@ -7,4 +7,5 @@ import java.util.UUID;
 
 public interface WorkspaceRolePermissionRepository extends JpaRepository<WorkspaceRolePermission, UUID> {
     Optional<WorkspaceRolePermission> findByWorkspaceIdAndRoleAndPermission(UUID workspaceId, WorkspaceRole role, Permission permission);
+    Optional<WorkspaceRolePermission> findByWorkspaceId(UUID workspaceId);
 }
