@@ -71,7 +71,7 @@ public class WorkspaceInvitationService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+@Transactional
     public void acceptInvitation(User acceptingUser, String token) {
         WorkspaceInvitation invitation = invitationRepository.findByToken(token)
                 .orElseThrow(() -> new NotFoundException("Invalid invitation token"));
@@ -86,21 +86,30 @@ public class WorkspaceInvitationService {
             throw new BadRequestException("Invitation has expired");
         }
 
-        // Prevent double-joining
-        boolean alreadyMember = memberRepository.findByWorkspaceIdAndUserId(
-                invitation.getWorkspace().getId(), acceptingUser.getId()).isPresent();
+        // Prevent double-joining OR reactivate if they previously left
+        java.util.Optional<WorkspaceMember> existingMemberOpt = memberRepository.findByWorkspaceIdAndUserId(
+                invitation.getWorkspace().getId(), acceptingUser.getId());
         
-        if (alreadyMember) {
-            throw new BadRequestException("You are already a member of this workspace");
+        if (existingMemberOpt.isPresent()) {
+            WorkspaceMember existingMember = existingMemberOpt.get();
+            if (existingMember.getRemovedAt() == null) {
+                throw new BadRequestException("You are already an active member of this workspace");
+            } else {
+                // Reactivate the user with the role specified in the invitation!
+                existingMember.setRemovedAt(null);
+                existingMember.setRole(invitation.getRole());
+                existingMember.setJoinedAt(LocalDateTime.now());
+                memberRepository.save(existingMember);
+            }
+        } else {
+            // 1. Create the brand new member
+            WorkspaceMember newMember = new WorkspaceMember();
+            newMember.setWorkspace(invitation.getWorkspace());
+            newMember.setUser(acceptingUser);
+            newMember.setRole(invitation.getRole());
+            newMember.setJoinedAt(LocalDateTime.now());
+            memberRepository.save(newMember);
         }
-
-        // 1. Create the new member
-        WorkspaceMember newMember = new WorkspaceMember();
-        newMember.setWorkspace(invitation.getWorkspace());
-        newMember.setUser(acceptingUser);
-        newMember.setRole(invitation.getRole());
-        newMember.setJoinedAt(LocalDateTime.now());
-        memberRepository.save(newMember);
 
         // 2. Mark invite as accepted
         invitation.setStatus(InvitationStatus.ACCEPTED);

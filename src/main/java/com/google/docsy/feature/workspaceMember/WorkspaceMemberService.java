@@ -44,6 +44,10 @@ public class WorkspaceMemberService {
         WorkspaceMember targetMember = memberRepository.findById(targetMemberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
 
+        if (!targetMember.getWorkspace().getId().equals(workspaceId)) {
+            throw new BadRequestException("This user is not a member of this workspace");
+        }
+
         if (targetMember.getRole() == WorkspaceRole.OWNER) {
             throw new BadRequestException("Cannot change the role of the workspace OWNER");
         }
@@ -64,6 +68,10 @@ public class WorkspaceMemberService {
                 .orElseThrow(() -> new NotFoundException("Member not found"));
 
         if (targetMember.getRole() == WorkspaceRole.OWNER) {
+            throw new BadRequestException("Cannot change the role of the workspace OWNER");
+        }
+
+        if (targetMember.getRole() == WorkspaceRole.OWNER) {
             throw new BadRequestException("Cannot remove the workspace OWNER");
         }
 
@@ -75,6 +83,27 @@ public class WorkspaceMemberService {
         auditLogService.logAction(targetMember.getWorkspace(), requester, "MEMBER_REMOVED", "Removed User " + targetMember.getUser().getEmail());
         
         documentService.unassignRemovedReviewer(workspaceId, targetMember.getUser().getId());
+    }
+
+    @Transactional
+    public void leaveWorkspace(UUID workspaceId) {
+        User requester = currentUserProvider.getCurrentUser();
+        
+        WorkspaceMember member = memberRepository.findByWorkspaceIdAndUserId(workspaceId, requester.getId())
+                .orElseThrow(() -> new NotFoundException("You are not a member of this workspace"));
+
+        if (member.getRole() == WorkspaceRole.OWNER) {
+            throw new BadRequestException("The OWNER cannot leave the workspace. Transfer ownership first or delete the workspace.");
+        }
+
+        // Soft delete the membership
+        member.setRemovedAt(LocalDateTime.now());
+        memberRepository.save(member);
+
+        auditLogService.logAction(member.getWorkspace(), requester, "MEMBER_LEFT", requester.getEmail() + " left the workspace");
+
+        // Clean up any documents stuck ON_REVIEW assigned to them
+        documentService.unassignRemovedReviewer(workspaceId, requester.getId());
     }
 
     private WorkspaceMemberResponse mapToResponse(WorkspaceMember member) {

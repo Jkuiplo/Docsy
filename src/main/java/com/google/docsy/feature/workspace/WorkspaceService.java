@@ -25,7 +25,6 @@ import com.google.docsy.feature.workspaceMember.WorkspaceMemberRepository;
 import com.google.docsy.feature.permission.Permission;
 import com.google.docsy.feature.permission.WorkspaceRolePermission;
 
-
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -80,11 +79,25 @@ public class WorkspaceService {
         Workspace workspace = workspaceRepository.findByJoinCode(request.getJoinCode())
                 .orElseThrow(() -> new NotFoundException("Invalid join code"));
 
-        // Check if already a member
-        if (memberRepository.findByWorkspaceIdAndUserId(workspace.getId(), user.getId()).isPresent()) {
-            throw new BadRequestException("You are already a member of this workspace");
-        }
+        java.util.Optional<WorkspaceMember> existingMemberOpt = 
+                memberRepository.findByWorkspaceIdAndUserId(workspace.getId(), user.getId());
 
+        if (existingMemberOpt.isPresent()) {
+            WorkspaceMember existing = existingMemberOpt.get();
+            if (existing.getRemovedAt() == null) {
+                throw new BadRequestException("You are already an active member of this workspace");
+            } else {
+                // Reactivate the user!
+                existing.setRemovedAt(null);
+                existing.setRole(WorkspaceRole.USER); // Reset to base role
+                existing.setJoinedAt(LocalDateTime.now());
+                memberRepository.save(existing);
+                
+                auditLogService.logAction(workspace, user, "MEMBER_REJOINED", user.getEmail() + " rejoined the workspace");
+                return workspaceMapper.toResponse(workspace);
+            }
+        }
+        
         // Validate mode and password
         if (workspace.getJoinMode() == JoinMode.INVITE_ONLY) {
             throw new BadRequestException("This workspace is invite-only. You must receive an email invitation.");
